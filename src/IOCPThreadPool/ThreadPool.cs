@@ -286,7 +286,7 @@ namespace ThePool
                             out lpNumberOfBytes,
                             out lpCompletionKey,
                             out lpOverlapped,
-                            (uint)_dispatchTimeout);
+                            (uint)_poolMaintPeriod); // 注意，此处为线程池的维护时间而非dispatch超时时间
                     }
 
                     // 再检查一次
@@ -354,8 +354,7 @@ namespace ThePool
                 // 等待超时
                 else if (ret == WAIT_TIMEOUT)
                 {
-                    if (_currentThreads < _maxThreads &&
-                        _activeThreads == _currentThreads)
+                    if (_currentThreads < _maxThreads && _activeThreads == _currentThreads)
                     {
                         // 创建并开启一个新的线程
                         CreateAndStartWorkThread();
@@ -391,6 +390,8 @@ namespace ThePool
                             out lpOverlapped,
                             INFINITE_TIMEOUT);
                     }
+
+                    _dispatchCompleteEvent.Set();
 
                     if (numbserOfBytes <= 0)
                         continue;
